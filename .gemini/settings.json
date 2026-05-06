@@ -1,0 +1,17 @@
+{
+   "context": {
+    "fileName": ["AGENTS.md"]
+  },
+   "tools": {
+      "shell": {
+         "enableInteractiveShell": true,
+         "pager": "bat"
+      }
+   },
+   "telemetry": {
+      "enabled": false
+   },
+   "privacy": {
+    "usageStatisticsEnabled": false
+  }
+}

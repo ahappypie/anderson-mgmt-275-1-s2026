@@ -1,0 +1,27 @@
+{
+  "nodes": {
+    "nixpkgs": {
+      "locked": {
+        "lastModified": 1775246633,
+        "narHash": "sha256-hPJYhBRS3wfV0f2VvMDYtxewuKIUIB7Rzz1kF9jnv8s=",
+        "owner": "ahappypie",
+        "repo": "nixpkgs",
+        "rev": "6dedebf7b38d277e71aa4bf5ca666cc69fb4ea4f",
+        "type": "github"
+      },
+      "original": {
+        "owner": "ahappypie",
+        "ref": "fix/vscode-with-extensions-macos-path",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "root": {
+      "inputs": {
+        "nixpkgs": "nixpkgs"
+      }
+    }
+  },
+  "root": "root",
+  "version": 7
+}
