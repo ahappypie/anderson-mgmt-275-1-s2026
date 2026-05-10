@@ -1,9 +1,18 @@
-# Plan: GAP Experiment and Evaluation Design
-
-## Tasks
-- [x] Research and brainstorm experiment/evaluation details -> verify: Internal consistency with Product Brief/Strategy
-- [x] Draft A/B Experiment Design (`designs/EXPERIMENT_DESIGN.md`) -> verify: Template completeness
-- [x] Review and refine experiment -> verify: Alignment with "Verifiable Trust" vision, communicate: discuss with user
-- [x] Draft Evaluation Design (`designs/EVALUATION_DESIGN.md`) -> verify: Template completeness
-- [x] Review and refine evaluation -> verify: Alignment with "Verifiable Trust" vision, communicate: discuss with user
-
+# Plan: Claude Governed Action Proxy Prototype
+- [x] Review knowledge/software-engineer/PROTOTYPE.md and ask any clarifying questions
+- [x] Check available versions of Node and pnpm in this development environment
+- [x] Set up pnpm monorepo in project root
+- [x] Set up `apps/` directory for frontend subprojects
+- [x] Set up `prototype-web` project in `apps` using pnpm
+- [x] Set up Astro v6, Tailwind v4 and Typescript v6 in `prototype-web`
+- [x] `prototype-web`: Build static version of LLM chat UI on the home page
+- [x] `prototype-web`: Build left sidebar (Action Pane) on the home page
+- [x] `prototype-web`: Build right sidebar (Agent Pane) on the home page
+- [x] `prototype-web`: Accept user input instead of a static example. use regex to find "transfer" and the number within the input.
+- [x] `prototype-web`: hide "Escalation Required" block until an action is *actually* required
+- [x] `prototype-web`: change Claude avatar from "A" to "C"
+- [x] `prototype-web`: append actions to sidebars with independently scrollable lists
+- [x] `prototype-web`: make chat independently scrollable
+- [x] `prototype-web`: make action separators more noticeable, i.e. lighter in dark mode
+- [x] `prototype-web`: delay all responses 250ms
+- [x] `prototype-web`: claude should respond in the chat first when dealing with an unapproved transfer, then update the panes. if the transfer is auto approved, then   the panes should update first  

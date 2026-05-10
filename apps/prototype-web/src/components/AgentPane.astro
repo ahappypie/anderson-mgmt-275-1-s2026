@@ -1,0 +1,12 @@
+---
+interface Props {
+	reasoning: string;
+	confidence: number;
+}
+
+const { reasoning, confidence } = Astro.props;
+---
+
+<div id="agent-action-list" class="space-y-12 pb-8">
+	<!-- Dynamic agent reasoning will be appended here -->
+</div>

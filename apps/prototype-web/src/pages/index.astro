@@ -1,0 +1,387 @@
+---
+import Layout from '../layouts/Layout.astro';
+import ActionPane from '../components/ActionPane.astro';
+import AgentPane from '../components/AgentPane.astro';
+
+// Initial state for server rendering
+const initialToolCall = {
+	name: 'waiting...',
+	params: {}
+};
+
+const initialPolicies = [] as any[];
+const initialReasoning = "Awaiting user input to begin analysis...";
+---
+
+<Layout title="GAP Prototype - Governed Action Proxy">
+	<main class="grid grid-cols-[320px_1fr_320px] h-screen overflow-hidden">
+		<!-- Left: Action Pane -->
+		<aside id="action-sidebar" class="border-r border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 flex flex-col h-full overflow-hidden">
+			<header class="p-4 border-b border-slate-200 dark:border-slate-800 shrink-0">
+				<h2 class="text-xs font-bold uppercase tracking-widest text-slate-400 flex items-center gap-2">
+					<span id="action-pane-indicator" class="w-1.5 h-1.5 rounded-full bg-slate-300"></span>
+					Action Pane
+				</h2>
+			</header>
+			<div class="flex-1 overflow-y-auto p-4 custom-scrollbar">
+				<ActionPane toolCall={initialToolCall} policies={initialPolicies} />
+			</div>
+		</aside>
+
+		<!-- Center: Chat UI -->
+		<section class="flex flex-col h-full bg-white dark:bg-slate-950 relative overflow-hidden">
+			<header class="border-b border-slate-200 dark:border-slate-800 p-4 flex items-center justify-between shrink-0">
+				<div class="flex items-center gap-3">
+					<div class="w-8 h-8 rounded-full bg-orange-500 flex items-center justify-center text-white font-bold text-xs italic">C</div>
+					<div>
+						<h1 class="font-semibold text-sm">Claude 4.7 Sonnet</h1>
+						<p class="text-[10px] text-green-500 flex items-center gap-1">
+							<span class="w-1 h-1 rounded-full bg-green-500"></span>
+							Governed by GAP
+						</p>
+					</div>
+				</div>
+			</header>
+			
+			<div id="chat-container" class="flex-1 overflow-y-auto p-4 space-y-8 custom-scrollbar">
+				<div id="message-list" class="max-w-2xl mx-auto space-y-8 py-8">
+					<!-- Welcome Message -->
+					<div class="flex gap-4">
+						<div class="w-8 h-8 rounded bg-orange-50 dark:bg-orange-950/30 text-orange-600 dark:text-orange-400 flex items-center justify-center shrink-0 border border-orange-100 dark:border-orange-900/50">
+							<span class="text-xs font-bold italic">C</span>
+						</div>
+						<div class="space-y-1 pt-1 flex-1">
+							<p class="font-bold text-xs text-orange-500 uppercase tracking-tight">Claude</p>
+							<p class="text-sm leading-relaxed text-slate-600 dark:text-slate-400 italic">
+								Ready to assist. Try asking me to "Transfer $15,000 to Acme Corp".
+							</p>
+						</div>
+					</div>
+				</div>
+			</div>
+
+			<footer class="p-4 border-t border-slate-200 dark:border-slate-800 bg-slate-50/50 dark:bg-slate-900/20 shrink-0">
+				<form id="chat-form" class="max-w-2xl mx-auto relative flex items-center gap-3">
+					<div class="flex-1 relative">
+						<input 
+							id="chat-input"
+							type="text" 
+							placeholder="Ask Claude to transfer funds..." 
+							class="w-full p-3 pr-10 rounded-xl border border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 focus:outline-none focus:ring-2 focus:ring-orange-500/20 text-sm"
+							autocomplete="off"
+						/>
+					</div>
+					<button type="submit" class="w-10 h-10 rounded-xl bg-orange-500 hover:bg-orange-600 flex items-center justify-center text-white transition-colors">
+						<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z"/></svg>
+					</button>
+				</form>
+			</footer>
+		</section>
+
+		<!-- Right: Agent Pane -->
+		<aside id="agent-sidebar" class="border-l border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-900 flex flex-col h-full overflow-hidden">
+			<header class="p-4 border-b border-slate-200 dark:border-slate-800 shrink-0">
+				<h2 class="text-xs font-bold uppercase tracking-widest text-slate-400 flex items-center gap-2">
+					<span id="agent-pane-indicator" class="w-1.5 h-1.5 rounded-full bg-slate-300"></span>
+					Agent Pane
+				</h2>
+			</header>
+			<div class="flex-1 overflow-y-auto p-4 custom-scrollbar">
+				<AgentPane reasoning={initialReasoning} confidence={0} />
+			</div>
+		</aside>
+	</main>
+
+	<style is:global>
+		@reference "../styles/global.css";
+
+		.custom-scrollbar::-webkit-scrollbar {
+			width: 4px;
+		}
+		.custom-scrollbar::-webkit-scrollbar-track {
+			background: transparent;
+		}
+		.custom-scrollbar::-webkit-scrollbar-thumb {
+			@apply bg-slate-200 dark:bg-slate-800 rounded-full;
+		}
+		.custom-scrollbar {
+			scrollbar-width: thin;
+			scrollbar-color: var(--color-slate-200) transparent;
+		}
+		.dark .custom-scrollbar {
+			scrollbar-color: var(--color-slate-800) transparent;
+		}
+	</style>
+
+	<script>
+		const chatForm = document.getElementById('chat-form') as HTMLFormElement;
+		const chatInput = document.getElementById('chat-input') as HTMLInputElement;
+		const messageList = document.getElementById('message-list');
+		const chatContainer = document.getElementById('chat-container');
+		
+		const actionList = document.getElementById('action-list');
+		const agentActionList = document.getElementById('agent-action-list');
+		
+		const actionPaneIndicator = document.getElementById('action-pane-indicator');
+		const agentPaneIndicator = document.getElementById('agent-pane-indicator');
+
+		let actionCount = 0;
+		const activeActions = new Map();
+
+		function addMessage(role: 'user' | 'claude', content: string, actionId?: string) {
+			if (!messageList) return;
+			const div = document.createElement('div');
+			div.className = "flex gap-4 animate-in fade-in slide-in-from-bottom-2 duration-300";
+			
+			const avatar = role === 'user' 
+				? '<div class="w-8 h-8 rounded bg-slate-100 dark:bg-slate-800 flex items-center justify-center shrink-0 border border-slate-200 dark:border-slate-700"><span class="text-xs font-bold text-slate-500">U</span></div>'
+				: '<div class="w-8 h-8 rounded bg-orange-50 dark:bg-orange-950/30 text-orange-600 dark:text-orange-400 flex items-center justify-center shrink-0 border border-orange-100 dark:border-orange-900/50"><span class="text-xs font-bold italic">C</span></div>';
+			
+			const name = role === 'user' ? 'USER' : 'CLAUDE';
+			const nameClass = role === 'user' ? 'text-slate-400' : 'text-orange-500';
+
+			let html = `
+				${avatar}
+				<div class="space-y-1 pt-1 flex-1">
+					<p class="font-bold text-xs ${nameClass} uppercase tracking-tight">${name}</p>
+					<p class="text-sm leading-relaxed">${content}</p>
+			`;
+
+			if (actionId) {
+				const action = activeActions.get(actionId);
+				html += `
+					<div id="tool-card-${actionId}" class="mt-4 p-4 bg-slate-50 dark:bg-slate-900/50 rounded-xl border border-slate-200 dark:border-slate-800 relative group overflow-hidden">
+						<div id="tool-border-${actionId}" class="absolute top-0 left-0 w-1 h-full bg-blue-500 transition-colors duration-500"></div>
+						<div class="flex items-center justify-between mb-2">
+							<div class="flex items-center gap-2">
+								<span id="tool-status-tag-${actionId}" class="text-[10px] font-bold text-blue-500 uppercase">Tool Intercepted</span>
+								<span class="text-[10px] text-slate-400">GAP-v1.4.2</span>
+							</div>
+							<div id="tool-indicator-${actionId}" class="w-2 h-2 rounded-full bg-blue-500 animate-pulse"></div>
+						</div>
+						<code class="text-[11px] block font-mono text-slate-600 dark:text-slate-400">
+							execute_wire_transfer({ amount: ${action.amount}, recipient: "${action.recipient}" })
+						</code>
+					</div>
+				`;
+			}
+
+			html += `</div>`;
+			div.innerHTML = html;
+			messageList.appendChild(div);
+			chatContainer?.scrollTo({ top: chatContainer.scrollHeight, behavior: 'smooth' });
+		}
+
+		function appendActionPane(actionId: string, amount: number, recipient: string) {
+			if (!actionList) return;
+			const isHighRisk = amount > 10000;
+			
+			const div = document.createElement('div');
+			div.id = `action-pane-${actionId}`;
+			div.className = "space-y-6 animate-in fade-in slide-in-from-left-2 duration-300 border-b border-slate-300 dark:border-slate-700 pb-8 last:border-0";
+			
+			div.innerHTML = `
+				<section>
+					<h3 class="text-xs font-bold text-slate-400 uppercase mb-2">Intercepted Tool Call</h3>
+					<div class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded p-3 font-mono text-xs">
+						<span class="text-blue-600 dark:text-blue-400">execute_wire_transfer</span>({<span class="text-slate-500">amount</span>: <span class="text-green-600 dark:text-green-400">${amount}</span>, <span class="text-slate-500">recipient</span>: <span class="text-green-600 dark:text-green-400">"${recipient}"</span>})
+					</div>
+				</section>
+
+				<section>
+					<h3 class="text-xs font-bold text-slate-400 uppercase mb-2">Policy Enforcement</h3>
+					<div class="space-y-2">
+						<div class="flex items-center justify-between p-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded text-xs">
+							<span class="font-medium">Max Transaction Limit ($10k)</span>
+							<span class="px-1.5 py-0.5 rounded text-[10px] font-bold ${isHighRisk ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' : 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400'}">${isHighRisk ? 'ESCALATE' : 'PASS'}</span>
+						</div>
+						<div class="flex items-center justify-between p-2 bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded text-xs">
+							<span class="font-medium">Whitelisted Recipient</span>
+							<span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400">PASS</span>
+						</div>
+					</div>
+				</section>
+
+				<section class="pt-4 border-t border-slate-200 dark:border-slate-800">
+					<div id="hitl-box-${actionId}" class="${isHighRisk ? '' : 'hidden'} p-4 bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-900/30 rounded-lg">
+						<h4 class="text-xs font-bold text-amber-800 dark:text-amber-400 uppercase mb-1">HITL Escalation Required</h4>
+						<p class="text-[11px] text-amber-700 dark:text-amber-500 mb-3">Amount exceeds deterministic $10,000 threshold. Awaiting supervisor approval.</p>
+						<div class="grid grid-cols-2 gap-2">
+							<button data-action-id="${actionId}" data-type="approve" class="action-btn px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white rounded font-medium text-xs transition-colors">Approve</button>
+							<button data-action-id="${actionId}" data-type="deny" class="action-btn px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded font-medium text-xs transition-colors">Deny</button>
+						</div>
+					</div>
+					<div id="status-box-${actionId}" class="${isHighRisk ? 'hidden' : ''} p-4 rounded-lg border ${isHighRisk ? '' : 'bg-green-50 dark:bg-green-900/10 border-green-200 dark:border-green-900/30'}">
+						<h4 class="text-xs font-bold uppercase mb-1 ${isHighRisk ? '' : 'text-green-800 dark:text-green-400'}">${isHighRisk ? '' : 'Auto-Approved'}</h4>
+						<p class="text-[11px] ${isHighRisk ? '' : 'text-green-700 dark:text-green-500'}">${isHighRisk ? '' : 'Transaction within autonomous limits. Executing tool call.'}</p>
+					</div>
+				</section>
+			`;
+			
+			actionList.appendChild(div);
+			div.scrollIntoView({ behavior: 'smooth' });
+			
+			if (isHighRisk) {
+				actionPaneIndicator?.classList.replace('bg-slate-300', 'bg-orange-500');
+				actionPaneIndicator?.classList.add('animate-pulse');
+			} else {
+				actionPaneIndicator?.classList.replace('bg-slate-300', 'bg-green-500');
+			}
+		}
+
+		function appendAgentPane(actionId: string, amount: number, recipient: string) {
+			if (!agentActionList) return;
+			const isHighRisk = amount > 10000;
+			const confidence = 95 + Math.random() * 4;
+			const time = new Date().toLocaleTimeString([], { hour12: false });
+			
+			const div = document.createElement('div');
+			div.id = `agent-pane-${actionId}`;
+			div.className = "space-y-6 animate-in fade-in slide-in-from-right-2 duration-300 border-b border-slate-300 dark:border-slate-700 pb-8 last:border-0";
+			
+			div.innerHTML = `
+				<section>
+					<h3 class="text-xs font-bold text-slate-400 uppercase mb-2">Supervisor Reasoning</h3>
+					<div class="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded p-4 text-xs leading-relaxed italic text-slate-600 dark:text-slate-400">
+						"${isHighRisk ? 'Transaction exceeds standard $10,000 limit, requiring human oversight. ' : 'Transaction is within limits. '}Recipient '${recipient}' is verified. Reasoning appears consistent with operational patterns. Security alignment is high."
+					</div>
+				</section>
+
+				<section>
+					<h3 class="text-xs font-bold text-slate-400 uppercase mb-2">Decision Confidence</h3>
+					<div class="space-y-2">
+						<div class="flex items-center justify-between text-xs mb-1">
+							<span class="text-slate-500">Security Alignment</span>
+							<span class="font-bold text-green-600 dark:text-green-400">${confidence.toFixed(1)}%</span>
+						</div>
+						<div class="w-full bg-slate-200 dark:bg-slate-800 rounded-full h-1.5 overflow-hidden">
+							<div class="bg-green-500 h-full rounded-full" style="width: ${confidence}%"></div>
+						</div>
+					</div>
+				</section>
+
+				<section class="pt-4 border-t border-slate-200 dark:border-slate-800">
+					<h3 class="text-xs font-bold text-slate-400 uppercase mb-2">Audit Logs</h3>
+					<div class="space-y-2 font-mono text-[10px]">
+						<div class="flex gap-2"><span class="text-slate-400">${time}</span><span class="text-blue-500">[GAP]</span><span class="text-slate-600 dark:text-slate-400">Interception triggered...</span></div>
+						<div class="flex gap-2"><span class="text-slate-400">${time}</span><span class="text-blue-500">[GAP]</span><span class="text-slate-600 dark:text-slate-400">Policy evaluation complete.</span></div>
+						<div class="flex gap-2"><span class="text-slate-400">${time}</span><span class="text-purple-500">[AGENT]</span><span class="text-slate-600 dark:text-slate-400">Supervisor reasoning generated.</span></div>
+					</div>
+				</section>
+			`;
+			
+			agentActionList.appendChild(div);
+			div.scrollIntoView({ behavior: 'smooth' });
+			agentPaneIndicator?.classList.replace('bg-slate-300', 'bg-purple-500');
+		}
+
+		chatForm?.addEventListener('submit', (e) => {
+			e.preventDefault();
+			const msg = chatInput.value.trim();
+			if (!msg) return;
+
+			addMessage('user', msg);
+			chatInput.value = '';
+
+			const transferMatch = msg.match(/transfer.*?(\$?\d+(?:,\d+)?)/i);
+			if (transferMatch) {
+				const amount = parseInt(transferMatch[1].replace(/[\$,]/g, ''));
+				const recipientMatch = msg.match(/to\s+([A-Z][a-z]+(?:\s+[A-Z][a-z]+)*)/);
+				const recipient = recipientMatch ? recipientMatch[1] : "Unknown Vendor";
+				
+				const actionId = `act-${++actionCount}`;
+				activeActions.set(actionId, { amount, recipient, status: 'intercepted' });
+
+				const isHighRisk = amount > 10000;
+				if (isHighRisk) {
+					// Claude responds first
+					setTimeout(() => {
+						const response = `I understand. I will prepare the wire transfer of $${amount.toLocaleString()} to ${recipient}. Since this exceeds the $10,000 threshold, this action will require supervisor approval via the Governed Action Proxy.`;
+						addMessage('claude', response, actionId);
+						
+						// Then update panes
+						setTimeout(() => {
+							appendActionPane(actionId, amount, recipient);
+							appendAgentPane(actionId, amount, recipient);
+						}, 250);
+					}, 250);
+				} else {
+					// Panes update first
+					setTimeout(() => {
+						appendActionPane(actionId, amount, recipient);
+						appendAgentPane(actionId, amount, recipient);
+						
+						// Then Claude responds
+						setTimeout(() => {
+							const response = `I will execute the wire transfer of $${amount.toLocaleString()} to ${recipient}. This is within autonomous limits.`;
+							addMessage('claude', response, actionId);
+							updateActionStatus(actionId, 'approve');
+						}, 250);
+					}, 250);
+				}
+			} else {
+				setTimeout(() => {
+					addMessage('claude', "I'm a specialized prototype for fund transfers. Try asking me to 'Transfer $15,000 to Acme Corp'.");
+				}, 600);
+			}
+		});
+
+		function updateActionStatus(actionId: string, type: 'approve' | 'deny') {
+			const action = activeActions.get(actionId);
+			if (!action) return;
+
+			const hitlBox = document.getElementById(`hitl-box-${actionId}`);
+			const statusBox = document.getElementById(`status-box-${actionId}`);
+			const toolBorder = document.getElementById(`tool-border-${actionId}`);
+			const toolStatusTag = document.getElementById(`tool-status-tag-${actionId}`);
+			const toolIndicator = document.getElementById(`tool-indicator-${actionId}`);
+
+			if (hitlBox) hitlBox.classList.add('hidden');
+			if (statusBox) {
+				statusBox.classList.remove('hidden');
+				if (type === 'approve') {
+					statusBox.className = "p-4 rounded-lg border bg-green-50 dark:bg-green-900/10 border-green-200 dark:border-green-900/30";
+					statusBox.innerHTML = `
+						<h4 class="text-xs font-bold uppercase mb-1 text-green-800 dark:text-green-400">Action Executed</h4>
+						<p class="text-[11px] text-green-700 dark:text-green-500">The wire transfer of $${action.amount.toLocaleString()} to ${action.recipient} has been processed.</p>
+					`;
+					if (toolBorder) toolBorder.className = "absolute top-0 left-0 w-1 h-full bg-green-500 transition-colors duration-500";
+					if (toolStatusTag) {
+						toolStatusTag.innerText = 'Tool Executed';
+						toolStatusTag.className = "text-[10px] font-bold text-green-500 uppercase";
+					}
+					if (toolIndicator) toolIndicator.className = "w-2 h-2 rounded-full bg-green-500";
+					
+					if (action.amount > 10000) {
+						addMessage('claude', "The wire transfer has been approved and executed. Is there anything else you need help with?");
+					}
+				} else {
+					statusBox.className = "p-4 rounded-lg border bg-red-50 dark:bg-red-900/10 border-red-200 dark:border-red-900/30";
+					statusBox.innerHTML = `
+						<h4 class="text-xs font-bold uppercase mb-1 text-red-800 dark:text-red-400">Action Denied</h4>
+						<p class="text-[11px] text-red-700 dark:text-red-500">The transaction was blocked by supervisor intervention.</p>
+					`;
+					if (toolBorder) toolBorder.className = "absolute top-0 left-0 w-1 h-full bg-red-500 transition-colors duration-500";
+					if (toolStatusTag) {
+						toolStatusTag.innerText = 'Tool Blocked';
+						toolStatusTag.className = "text-[10px] font-bold text-red-500 uppercase";
+					}
+					if (toolIndicator) toolIndicator.className = "w-2 h-2 rounded-full bg-red-500";
+					
+					addMessage('claude', "The wire transfer was denied. I have cancelled the request. How would you like to proceed?");
+				}
+			}
+			
+			actionPaneIndicator?.classList.remove('animate-pulse');
+		}
+
+		document.addEventListener('click', (e) => {
+			const target = e.target as HTMLElement;
+			if (target.classList.contains('action-btn')) {
+				const actionId = target.getAttribute('data-action-id');
+				const type = target.getAttribute('data-type') as 'approve' | 'deny';
+				if (actionId) updateActionStatus(actionId, type);
+			}
+		});
+	</script>
+</Layout>
