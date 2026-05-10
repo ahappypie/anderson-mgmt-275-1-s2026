@@ -1,0 +1,19 @@
+---
+interface Props {
+	toolCall: {
+		name: string;
+		params: Record<string, any>;
+	};
+	policies: Array<{
+		name: string;
+		status: 'PASS' | 'FAIL' | 'ESCALATE';
+		reason?: string;
+	}>;
+}
+
+const { toolCall, policies } = Astro.props;
+---
+
+<div id="action-list" class="space-y-8 pb-8">
+	<!-- Dynamic actions will be appended here -->
+</div>

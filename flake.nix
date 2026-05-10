@@ -5,11 +5,6 @@
   inputs = {
     # until https://github.com/NixOS/nixpkgs/pull/507766 is merged
     nixpkgs.url = "github:ahappypie/nixpkgs/fix/vscode-with-extensions-macos-path"; 
-
-    # rust-overlay = {
-    #   url = "github:oxalica/rust-overlay";
-    #   inputs.nixpkgs.follows = "nixpkgs";
-    # };
   };
 
   # Flake outputs
@@ -17,14 +12,12 @@
     {
       self,
       nixpkgs,
-      # rust-overlay,
     }:
     let
       overlays = [
-        # rust-overlay.overlays.default
-        # (final: prev: {
-        #   rustToolchain = final.rust-bin.fromRustupToolchainFile ./rust-toolchain.toml;
-        # })
+        (final: prev: {
+          nodejs = prev.nodejs_24;
+        })
       ];
 
       # Systems supported
@@ -51,7 +44,7 @@
         { pkgs }:
         let
           commonBuildInputs = with pkgs; [ ];
-          commonPackages = with pkgs; [ ]; # rustToolchain ];
+          commonPackages = with pkgs; [ nodejs pnpm ];
         in
         {
           default = pkgs.mkShell {
@@ -71,7 +64,7 @@
                   vscodeExtensions =
                     with vscode-extensions;
                     [
-                      # rust-lang.rust-analyzer
+                      astro-build.astro-vscode
 
                       jnoortheen.nix-ide
                       mkhl.direnv
