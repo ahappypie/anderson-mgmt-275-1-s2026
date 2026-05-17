@@ -22,8 +22,12 @@ On first page load, you will see a suggested message. You can try other messages
 - [`AGENTS.md`](./AGENTS.md), [`.agents/*`](./.agents/) and [`.gemini/agents/*`](./.gemini/agents/) define the agentic harness used for this project, including the primary agent (software engineer) and product manager subagent.
 - [`knowledge/*`](./knowledge/) includes memory files for each agent that persists relevant knowledge (including background context and prototype design) across sessions.
 - [`PLAN.md`](./PLAN.md) acts as the prompt history for the agents during prototype development. Agents are directed to use the planfile as the primary source of direction by using a custom skill.
-- [`designs/*`](./designs/) holds experimental and evaluation tests to conduct in the future.
+
+## PR-FAQ
 - [`PR-FAQ.pdf`](./PR-FAQ.pdf) is a copy of the press release and frequently asked questions for distribution.
+
+## Eval Appendix
+- [`designs/*`](./designs/) holds experimental and evaluation tests to conduct in the future.
 
 ## Navigating the Project
 This project uses a `pnpm` monorepo-style structure. The single artifact is currently the prototype, at [`apps/prototype-web`](./apps/prototype-web/). It uses the Astro web framework and is deployed as a static site on Cloudflare.
