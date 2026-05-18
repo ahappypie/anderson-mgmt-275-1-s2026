@@ -28,7 +28,9 @@ On first page load, you will see a suggested message. You can try other messages
 ## PR-FAQ
 - [`PR-FAQ.pdf`](./PR-FAQ.pdf) is a copy of the press release and frequently asked questions for distribution.
 
-## Eval Appendix
+## Eval Appendix & User Interviews
+- [`.gemini/agents/PERSONAS.md](./.gemini/agents/PERSONAS.md) - describes user persona subagents that can be asked for user interviews or feedback.
+- [`UX.pdf`](./UX.pdf) - insights gained from user interviews
 - [`designs/*`](./designs/) holds experimental and evaluation tests to conduct in the future.
 
 ## Navigating the Project
