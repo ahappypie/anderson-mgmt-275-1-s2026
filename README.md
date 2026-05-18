@@ -1,6 +1,8 @@
 # What is this Repository?
 This is the development environment, agent context and prototype for the final group assignment for UCLA Anderson's MGMT 275 Product Delivery class for the Spring 2026 quarter.
 
+### Quick Links: [Repository](https://github.com/ahappypie) | [Prototype](https://claude-gap-prototype.watershed.technology) | [PR-FAQ](./PR-FAQ.pdf)
+
 ## Group Members
 - Brian Bagdasarian, FTMBA 2027
 - Shen Liu, FTMBA 2027
